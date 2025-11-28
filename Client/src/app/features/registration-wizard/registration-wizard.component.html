@@ -1,0 +1,237 @@
+<mat-horizontal-stepper linear>
+  <!-- Step 1: Company -->
+  <mat-step [stepControl]="companyForm" label="Company">
+    <form [formGroup]="companyForm">
+      <div class="step-content">
+        <h2>Step 1: Company data</h2>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Company name</mat-label>
+          <input
+            matInput
+            formControlName="companyName"
+            placeholder="Start typing company name"
+            [matAutocomplete]="autoCompany"
+          />
+          <mat-error *ngIf="companyControls['companyName'].hasError('required')">
+            Company name is required.
+          </mat-error>
+          <mat-error *ngIf="companyControls['companyName'].hasError('maxlength')">
+            Company name must be at most 255 characters.
+          </mat-error>
+        </mat-form-field>
+
+        <mat-autocomplete #autoCompany="matAutocomplete" (optionSelected)="onCompanyOptionSelected($event.option.value)">
+          <mat-option
+            *ngFor="let suggestion of (companySuggestions$ | async) ?? []"
+            [value]="suggestion"
+          >
+            {{ suggestion.name }}
+          </mat-option>
+        </mat-autocomplete>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Industry</mat-label>
+          <mat-select formControlName="industryId">
+            <mat-option [value]="null">Select industry…</mat-option>
+            <mat-option *ngFor="let industry of (industries$ | async) ?? []" [value]="industry.id">
+              {{ industry.name }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="companyControls['industryId'].hasError('required')">
+            Industry is required.
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="step-actions">
+        <span></span>
+        <button mat-raised-button color="primary" matStepperNext [disabled]="!canProceedFromCompany()">
+          Next
+        </button>
+      </div>
+    </form>
+  </mat-step>
+
+  <!-- Step 2: User -->
+  <mat-step [stepControl]="userForm" label="User">
+    <form [formGroup]="userForm">
+      <div class="step-content">
+        <h2>Step 2: User data</h2>
+
+        <div class="two-columns">
+          <mat-form-field appearance="outline">
+            <mat-label>First name</mat-label>
+            <input matInput formControlName="firstName" />
+            <mat-error *ngIf="userControls['firstName'].hasError('required')">
+              First name is required.
+            </mat-error>
+            <mat-error *ngIf="userControls['firstName'].hasError('maxlength')">
+              First name must be at most 100 characters.
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Last name</mat-label>
+            <input matInput formControlName="lastName" />
+            <mat-error *ngIf="userControls['lastName'].hasError('required')">
+              Last name is required.
+            </mat-error>
+            <mat-error *ngIf="userControls['lastName'].hasError('maxlength')">
+              Last name must be at most 100 characters.
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Username</mat-label>
+          <input matInput formControlName="userName" autocomplete="off" />
+          <mat-hint *ngIf="!userControls['userName'].touched">
+            Username must be unique in the system.
+          </mat-hint>
+          <mat-error *ngIf="userControls['userName'].hasError('required')">
+            Username is required.
+          </mat-error>
+          <mat-error *ngIf="userControls['userName'].hasError('maxlength')">
+            Username must be at most 100 characters.
+          </mat-error>
+          <mat-error *ngIf="userControls['userName'].hasError('usernameTaken')">
+            This username is already taken.
+          </mat-error>
+          <mat-hint *ngIf="usernameCheckInProgress">
+            Checking username availability…
+          </mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email (optional)</mat-label>
+          <input matInput type="email" formControlName="email" />
+          <mat-error *ngIf="userControls['email'].hasError('email')">
+            Please enter a valid email address.
+          </mat-error>
+          <mat-error *ngIf="userControls['email'].hasError('maxlength')">
+            Email must be at most 256 characters.
+          </mat-error>
+        </mat-form-field>
+
+        <div class="two-columns">
+          <mat-form-field appearance="outline">
+            <mat-label>Password</mat-label>
+            <input matInput type="password" formControlName="password" />
+            <mat-hint>Minimum 8 characters. Password will be stored securely (PBKDF2).</mat-hint>
+            <mat-error *ngIf="userControls['password'].hasError('required')">
+              Password is required.
+            </mat-error>
+            <mat-error *ngIf="userControls['password'].hasError('minlength')">
+              Password must be at least 8 characters long.
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Repeat password</mat-label>
+            <input matInput type="password" formControlName="passwordRepeat" />
+            <mat-error *ngIf="userControls['passwordRepeat'].hasError('required')">
+              Please repeat the password.
+            </mat-error>
+            <mat-error *ngIf="userForm.errors?.['passwordsMismatch']">
+              Passwords do not match.
+            </mat-error>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="step-actions">
+        <button mat-button matStepperPrevious>Back</button>
+        <button mat-raised-button color="primary" matStepperNext [disabled]="!canProceedFromUser()">
+          Next
+        </button>
+      </div>
+    </form>
+  </mat-step>
+
+  <!-- Step 3: Summary & terms -->
+  <mat-step [stepControl]="termsForm" label="Summary">
+    <form [formGroup]="termsForm">
+      <div class="step-content">
+        <h2>Step 3: Summary & terms</h2>
+
+        <ng-container *ngIf="(industries$ | async) as industries">
+          <h3>Company</h3>
+          <p>
+            <strong>Name:</strong> {{ buildSummaryCompany() }}<br />
+            <strong>Industry:</strong> {{ buildSummaryIndustryName(industries) }}
+          </p>
+        </ng-container>
+
+        <h3>User</h3>
+        <p>
+          <strong>Name:</strong> {{ buildSummaryUserFullName() }}<br />
+          <strong>Username:</strong> {{ userControls['userName'].value }}<br />
+          <strong>Email:</strong> {{ userControls['email'].value || '—' }}
+        </p>
+
+        <mat-checkbox formControlName="acceptTerms">
+          I agree to the Terms of Service.
+        </mat-checkbox>
+        <mat-error *ngIf="termsControls['acceptTerms'].hasError('required') && termsControls['acceptTerms'].touched">
+          You must accept the Terms of Service.
+        </mat-error>
+
+        <br />
+
+        <mat-checkbox formControlName="acceptPrivacy">
+          I agree to the Privacy Policy.
+        </mat-checkbox>
+        <mat-error *ngIf="termsControls['acceptPrivacy'].hasError('required') && termsControls['acceptPrivacy'].touched">
+          You must accept the Privacy Policy.
+        </mat-error>
+      </div>
+
+      <div class="step-actions">
+        <button mat-button matStepperPrevious>Back</button>
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="submitRegistration()"
+          [disabled]="!canProceedFromTerms() || isSubmitting"
+          matStepperNext
+        >
+          <ng-container *ngIf="!isSubmitting">Register</ng-container>
+          <ng-container *ngIf="isSubmitting">
+            <mat-progress-spinner
+              mode="indeterminate"
+              diameter="16"
+              strokeWidth="3">
+            </mat-progress-spinner>
+            &nbsp;Registering…
+          </ng-container>
+        </button>
+      </div>
+    </form>
+  </mat-step>
+
+  <!-- Step 4: Result -->
+  <mat-step label="Result">
+    <div class="step-content">
+      <h2>Step 4: Result</h2>
+
+      <div *ngIf="serverSuccess" class="server-message success">
+        <mat-icon color="primary">check_circle</mat-icon>
+        {{ serverSuccess }}
+      </div>
+
+      <div *ngIf="serverError" class="server-message error">
+        <mat-icon color="warn">error</mat-icon>
+        {{ serverError }}
+      </div>
+
+      <div *ngIf="!serverError && !serverSuccess">
+        No registration has been submitted yet.
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button mat-button matStepperPrevious>Back</button>
+    </div>
+  </mat-step>
+</mat-horizontal-stepper>
