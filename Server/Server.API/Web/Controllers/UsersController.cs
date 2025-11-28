@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Server.API.Application.Abstractions;
+using Server.API.Application.Abstractions.Persistance;
 using Server.API.Infrastructure.Persistance;
 using Server.API.Web.DTOs;
 
@@ -10,11 +12,11 @@ namespace Server.API.Web.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-        private readonly AppDbContext _dbContext;
+        private readonly IUserRepository _userRepo;
 
-        public UsersController(AppDbContext dbContext)
+        public UsersController(IRegistrationService _userRepo)
         {
-            _dbContext = dbContext;
+            _userRepo = _userRepo;
         }
 
         /// <summary>
@@ -29,7 +31,7 @@ namespace Server.API.Web.Controllers
             if (string.IsNullOrWhiteSpace(username))
                 return BadRequest(new { message = "Username is required." });
 
-            var exists = await _dbContext.Users.AnyAsync(u => u.UserName == username, cancellationToken);
+            var exists = await _userRepo.IsUserNameTakenAsync(username, cancellationToken);
             return Ok(new UsernameAvailabilityResponse { IsAvailable = !exists });
         }
     }

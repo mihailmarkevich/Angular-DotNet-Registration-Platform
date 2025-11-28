@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Server.API.Application.Abstractions;
+using Server.API.Application.Abstractions.Persistance;
 using Server.API.Web.DTOs;
 
 namespace Server.API.Web.Controllers
@@ -10,11 +10,11 @@ namespace Server.API.Web.Controllers
     [Route("api/[controller]")]
     public class IndustriesController : ControllerBase
     {
-        private readonly IIndustryService _industryService;
+        private readonly IIndustryRepository _industryRepo;
 
-        public IndustriesController(IIndustryService industryService)
+        public IndustriesController(IIndustryRepository industryService)
         {
-            _industryService = industryService;
+            _industryRepo = industryService;
         }
 
         /// <summary>
@@ -25,7 +25,7 @@ namespace Server.API.Web.Controllers
         [ProducesResponseType(typeof(IEnumerable<IndustryDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<IEnumerable<IndustryDto>>> GetAll(CancellationToken cancellationToken)
         {
-            var industries = await _industryService.GetAllAsync(cancellationToken);
+            var industries = await _industryRepo.GetAllAsync(cancellationToken);
 
             var result = industries.ToDtoList();
 

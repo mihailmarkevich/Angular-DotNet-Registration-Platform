@@ -1,15 +1,15 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Server.API.Application.Abstractions;
+using Server.API.Application.Abstractions.Persistance;
 using Server.API.Domain.Entities;
 using Server.API.Infrastructure.Persistance;
 
-namespace Server.API.Infrastructure.Services
+namespace Server.API.Infrastructure.Persistance.Repositories
 {
-    public class IndustryService : IIndustryService
+    public class IndustryRepository : IIndustryRepository
     {
         private readonly AppDbContext _dbContext;
 
-        public IndustryService(AppDbContext dbContext)
+        public IndustryRepository(AppDbContext dbContext)
         {
             _dbContext = dbContext;
         }
@@ -21,6 +21,10 @@ namespace Server.API.Infrastructure.Services
                 .OrderBy(i => i.Name)
                 .ToListAsync(cancellationToken);
         }
+
+        public Task<bool> IndustryExistsAsync(int industryId, CancellationToken cancellationToken) =>
+            _dbContext.Industries.AnyAsync(i => i.Id == industryId, cancellationToken);
+
     }
 
 }

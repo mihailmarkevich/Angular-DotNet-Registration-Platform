@@ -1,5 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using Server.API.Application.Abstractions;
+using Server.API.Application.Abstractions.Persistance;
+using Server.API.Application.Features.Registration;
 using Server.API.Infrastructure.Persistance;
+using Server.API.Infrastructure.Persistance.Repositories;
+using Server.API.Infrastructure.Security;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,7 +22,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 
-// services ...
+builder.Services.AddTransient<IPasswordHasher, PasswordHasher>();
+builder.Services.AddTransient<ICompanyRepository, CompanyRepository>();
+builder.Services.AddTransient<IIndustryRepository, IndustryRepository>();
+builder.Services.AddTransient<IRegistrationService, RegistrationService>();
+builder.Services.AddTransient<IUnitOfWork, EfUnitOfWork>();
 
 // Enable CORS for Angular dev server
 var allowedOrigins = builder.Configuration
