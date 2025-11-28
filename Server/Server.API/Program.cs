@@ -1,11 +1,21 @@
+using Microsoft.EntityFrameworkCore;
+using Server.API.Data;
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
 
 // Configure EF Core with SQL Server
-//var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-//                       ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+                       ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    options.UseSqlServer(connectionString);
+});
+
 
 // services ...
 
