@@ -14,9 +14,9 @@ namespace Server.API.Web.Controllers
     {
         private readonly IUserRepository _userRepo;
 
-        public UsersController(IRegistrationService _userRepo)
+        public UsersController(IUserRepository userRepo)
         {
-            _userRepo = _userRepo;
+            _userRepo = userRepo;
         }
 
         /// <summary>

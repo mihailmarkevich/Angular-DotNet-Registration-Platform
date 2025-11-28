@@ -25,8 +25,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddTransient<IPasswordHasher, PasswordHasher>();
 builder.Services.AddTransient<ICompanyRepository, CompanyRepository>();
 builder.Services.AddTransient<IIndustryRepository, IndustryRepository>();
-builder.Services.AddTransient<IRegistrationService, RegistrationService>();
+builder.Services.AddTransient<IUserRepository, UserRepository>();
 builder.Services.AddTransient<IUnitOfWork, EfUnitOfWork>();
+builder.Services.AddTransient<IRegistrationService, RegistrationService>();
 
 // Enable CORS for Angular dev server
 var allowedOrigins = builder.Configuration
