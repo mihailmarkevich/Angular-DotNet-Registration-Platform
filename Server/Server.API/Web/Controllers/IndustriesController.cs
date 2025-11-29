@@ -11,10 +11,12 @@ namespace Server.API.Web.Controllers
     public class IndustriesController : ControllerBase
     {
         private readonly IIndustryRepository _industryRepo;
+        private readonly ILogger<IndustriesController> _logger;
 
-        public IndustriesController(IIndustryRepository industryService)
+        public IndustriesController(IIndustryRepository industryService, ILogger<IndustriesController> logger)
         {
             _industryRepo = industryService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -25,11 +27,22 @@ namespace Server.API.Web.Controllers
         [ProducesResponseType(typeof(IEnumerable<IndustryDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<IEnumerable<IndustryDto>>> GetAll(CancellationToken cancellationToken)
         {
-            var industries = await _industryRepo.GetAllAsync(cancellationToken);
+            try
+            {
+                var industries = await _industryRepo.GetAllAsync(cancellationToken);
 
-            var result = industries.ToDtoList();
+                var result = industries.ToDtoList();
 
-            return Ok(result);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during registration.");
+                return Problem(
+                    statusCode: StatusCodes.Status500InternalServerError,
+                    title: "Unexpected error during registration",
+                    detail: "An unexpected error occurred.");
+            }
         }
     }
 }

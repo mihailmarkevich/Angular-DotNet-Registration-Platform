@@ -11,10 +11,12 @@ namespace Server.API.Web.Controllers
     public class CompaniesController : ControllerBase
     {
         private readonly ICompanyRepository _companyRepo;
+        private readonly ILogger<CompaniesController> _logger;
 
-        public CompaniesController(ICompanyRepository companyService)
+        public CompaniesController(ICompanyRepository companyService, ILogger<CompaniesController> logger)
         {
             _companyRepo = companyService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -30,12 +32,23 @@ namespace Server.API.Web.Controllers
             if (string.IsNullOrWhiteSpace(query) || query.Trim().Length < 2)
                 return Ok(Array.Empty<CompanySuggestionDto>());
 
-            var companies = await _companyRepo
+            try
+            {
+                var companies = await _companyRepo
                 .SearchCompaniesAsync(query.Trim(), industryId, cancellationToken);
 
-            var result = companies.ToSuggestionDtoList();
+                var result = companies.ToSuggestionDtoList();
 
-            return Ok(result);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during registration.");
+                return Problem(
+                    statusCode: StatusCodes.Status500InternalServerError,
+                    title: "Unexpected error during registration",
+                    detail: "An unexpected error occurred.");
+            }
         }
 
     }

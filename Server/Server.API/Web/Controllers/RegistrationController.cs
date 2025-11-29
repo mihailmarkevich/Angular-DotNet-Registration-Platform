@@ -82,8 +82,19 @@ namespace Server.API.Web.Controllers
             if (string.IsNullOrWhiteSpace(username))
                 return BadRequest(new { message = "Username is required." });
 
-            var exists = await _userRepo.IsUserNameTakenAsync(username, cancellationToken);
-            return Ok(new UsernameAvailabilityResponse { IsAvailable = !exists });
+            try
+            {
+                var exists = await _userRepo.IsUserNameTakenAsync(username, cancellationToken);
+                return Ok(new UsernameAvailabilityResponse { IsAvailable = !exists });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during registration.");
+                return Problem(
+                    statusCode: StatusCodes.Status500InternalServerError,
+                    title: "Unexpected error during registration",
+                    detail: "An unexpected error occurred.");
+            }
         }
 
     }
