@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Server.API.Application.Abstractions.Persistance;
 using Server.API.Web.DTOs;
 

@@ -7,13 +7,7 @@ import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class CompaniesService {
-  /**
-   * NOTE: This expects a backend endpoint similar to:
-   * GET /api/companies/search?query={term}&industryId={id?}
-   *
-   * If that endpoint does not exist yet, the autocomplete will simply
-   * show no suggestions (errors are swallowed and logged to console).
-   */
+
   private readonly baseUrl = `${environment.apiBaseUrl}/api/companies`;
 
   constructor(private http: HttpClient) {}

@@ -62,6 +62,14 @@ else
     app.UseHttpsRedirection();
 }
 
+// CSP for XSS prevention
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.ContentSecurityPolicy =
+        "default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';";
+    await next();
+});
+
 app.UseCors(corsPolicyName);
 
 app.UseAuthorization();

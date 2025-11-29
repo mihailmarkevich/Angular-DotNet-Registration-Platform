@@ -111,6 +111,13 @@ export class RegistrationWizardComponent implements OnInit {
     }
 
     this.companySuggestions$ = companyNameControl.valueChanges.pipe(
+      map(value => {
+      if (industryIdControl.disabled) {
+        industryIdControl.enable({ emitEvent: false });
+        industryIdControl.reset(null, { emitEvent: false });
+      }
+      return value;
+    }),
       debounceTime(300),
       distinctUntilChanged(),
       filter(value => typeof value === 'string' && value.trim().length >= 2),
@@ -169,7 +176,22 @@ export class RegistrationWizardComponent implements OnInit {
   }
 
   onCompanyOptionSelected(option: CompanySuggestionDto): void {
-    this.companyForm.patchValue({ companyName: option.name });
+    const companyNameControl = this.companyForm.get('companyName');
+    const industryIdControl = this.companyForm.get('industryId');
+
+    if (!companyNameControl || !industryIdControl) {
+      return;
+    }
+
+    this.companyForm.patchValue(
+      {
+        companyName: option.name,
+        industryId: option.industryId
+      },
+      { emitEvent: false }
+    );
+
+    industryIdControl.disable({ emitEvent: false });
   }
 
   canProceedFromCompany(): boolean {

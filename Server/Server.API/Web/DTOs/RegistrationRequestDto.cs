@@ -6,6 +6,7 @@ public class RegistrationRequestDto
 {
     [Required]
     [StringLength(255)]
+    [RegularExpression(@"^[^<>]*$", ErrorMessage = "Company name contains invalid characters.")]
     public string CompanyName { get; set; } = null!;
 
     [Range(1, int.MaxValue, ErrorMessage = "Industry is required.")]
@@ -13,14 +14,17 @@ public class RegistrationRequestDto
 
     [Required]
     [StringLength(100)]
+    [RegularExpression(@"^[^<>]*$", ErrorMessage = "First name contains invalid characters.")]
     public string FirstName { get; set; } = null!;
 
     [Required]
     [StringLength(100)]
+    [RegularExpression(@"^[^<>]*$", ErrorMessage = "Last name contains invalid characters.")]
     public string LastName { get; set; } = null!;
 
     [Required]
     [StringLength(100)]
+    [RegularExpression(@"^[a-zA-Z0-9._-]+$", ErrorMessage = "Username contains invalid characters.")]
     public string UserName { get; set; } = null!;
 
     [EmailAddress]

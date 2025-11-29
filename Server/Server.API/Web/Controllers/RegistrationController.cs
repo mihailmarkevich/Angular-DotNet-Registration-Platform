@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Server.API.Application.Abstractions;
+using Server.API.Application.Abstractions.Persistance;
 using Server.API.Web.DTOs;
 using Server.API.Web.Mappings;
 
@@ -12,10 +13,15 @@ namespace Server.API.Web.Controllers
     {
         private readonly ILogger<RegistrationController> _logger;
         private readonly IRegistrationService _registrationService;
+        private readonly IUserRepository _userRepo;
 
-        public RegistrationController(IRegistrationService registrationService, ILogger<RegistrationController> logger)
+        public RegistrationController(
+            IRegistrationService registrationService, 
+            IUserRepository userRepository,
+            ILogger<RegistrationController> logger)
         {
             _registrationService = registrationService;
+            _userRepo = userRepository;
             _logger = logger;
         }
 
@@ -61,5 +67,24 @@ namespace Server.API.Web.Controllers
                     detail: "An unexpected error occurred.");
             }
         }
+
+        /// <summary>
+        /// Returns username availability status.
+        /// </summary>
+        /// <returns>Information is given username is available.</returns>
+        [HttpGet("check-username")]
+        [ProducesResponseType(typeof(UsernameAvailabilityResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<UsernameAvailabilityResponse>> CheckUsername(
+            [FromQuery] string username, 
+            CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(username))
+                return BadRequest(new { message = "Username is required." });
+
+            var exists = await _userRepo.IsUserNameTakenAsync(username, cancellationToken);
+            return Ok(new UsernameAvailabilityResponse { IsAvailable = !exists });
+        }
+
     }
 }
