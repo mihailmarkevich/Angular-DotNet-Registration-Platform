@@ -21,3 +21,13 @@ body {
   width: 100%;
   max-width: 960px;
 }
+
+.snackbar-error {
+  background-color: #b00020;
+  color: #fff;
+}
+
+.snackbar-success {
+  background-color: #2e7d32;
+  color: #fff;
+}

@@ -25,6 +25,7 @@ namespace Server.API.Web.Controllers
         /// <returns>List of industries.</returns>
         [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<IndustryDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<IEnumerable<IndustryDto>>> GetAll(CancellationToken cancellationToken)
         {
             try

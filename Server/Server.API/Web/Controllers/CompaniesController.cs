@@ -24,6 +24,7 @@ namespace Server.API.Web.Controllers
         /// </summary>
         [HttpGet("search")]
         [ProducesResponseType(typeof(IEnumerable<CompanySuggestionDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<IEnumerable<CompanySuggestionDto>>> Search(
             [FromQuery] string query,
             [FromQuery] int? industryId,

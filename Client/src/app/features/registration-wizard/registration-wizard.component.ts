@@ -28,6 +28,7 @@ import { CompaniesService } from '../../services/companies.service';
 import { IndustryDto } from '../../models/industry.dto';
 import { CompanySuggestionDto } from '../../models/company.dto';
 import { RegistrationRequestDto, RegistrationResponseDto } from '../../models/registration.dto';
+import { NotificationService } from 'src/app/core/services/notification.service';
 
 @Component({
   selector: 'app-registration-wizard',
@@ -58,7 +59,6 @@ export class RegistrationWizardComponent implements OnInit {
 
   usernameCheckInProgress = false;
   isSubmitting = false;
-  serverError: string | null = null;
   serverSuccess: string | null = null;
   lastResponse: RegistrationResponseDto | null = null;
 
@@ -67,12 +67,13 @@ export class RegistrationWizardComponent implements OnInit {
     private readonly industriesService: IndustriesService,
     private readonly registrationService: RegistrationService,
     private readonly usersService: UsersService,
-    private readonly companiesService: CompaniesService
+    private readonly companiesService: CompaniesService,
+    private readonly notifications: NotificationService
   ) {}
 
   ngOnInit(): void {
     this.buildForms();
-    this.industries$ = this.industriesService.getIndustries();
+    this.loadIndustries();
     this.setupCompanyAutocomplete();
   }
 
@@ -140,8 +141,6 @@ export class RegistrationWizardComponent implements OnInit {
 
     this.companySuggestions$ = companyNameControl.valueChanges.pipe(
       map(value => {
-        // if user starts typing again after selecting a company,
-        // re-enable and reset the industry
         if (industryIdControl.disabled) {
           industryIdControl.enable({ emitEvent: false });
           industryIdControl.reset(null, { emitEvent: false });
@@ -152,15 +151,27 @@ export class RegistrationWizardComponent implements OnInit {
       debounceTime(300),
       distinctUntilChanged(),
       switchMap(value => {
-        // if input is too short, don't call backend and CLEAR suggestions
         if (!value || value.length < 2) {
-          return of([]); // <- important: emit empty list
+          return of<CompanySuggestionDto[]>([]);
         }
 
-        return this.companiesService.searchCompanies(
-          value,
-          industryIdControl.value as number | null
-        );
+        return this.companiesService
+          .searchCompanies(value, industryIdControl.value as number | null)
+          .pipe(
+            catchError(err => {
+              console.error('Company search failed', err);
+
+              if (err.status === 400 && err.error?.errors) {
+                this.notifications.showError('Invalid company search request.');
+              } else {
+                this.notifications.showError(
+                  'Could not load company suggestions. You can still type your company name manually.'
+                );
+              }
+
+              return of<CompanySuggestionDto[]>([]);
+            })
+          );
       })
     );
   }
@@ -179,7 +190,15 @@ export class RegistrationWizardComponent implements OnInit {
         map(result => (result.isAvailable ? null : { usernameTaken: true })),
         catchError(err => {
           console.error('Username check failed', err);
-          // Do not block user on check failure
+
+          if (err.status === 400 && err.error?.errors) {
+            this.notifications.showError('Invalid username check request.');
+          } else {
+            this.notifications.showError(
+              'Could not verify username. It may still be available.'
+            );
+          }
+
           return of(null);
         }),
         finalize(() => {
@@ -188,6 +207,7 @@ export class RegistrationWizardComponent implements OnInit {
       );
     };
   }
+
 
   private passwordsMatchValidator(): ValidatorFn {
     return (group: AbstractControl): ValidationErrors | null => {
@@ -280,10 +300,10 @@ export class RegistrationWizardComponent implements OnInit {
       this.companyForm.markAllAsTouched();
       this.userForm.markAllAsTouched();
       this.termsForm.markAllAsTouched();
+      this.notifications.showError('Please fix the errors in the form before submitting.');
       return;
     }
 
-    this.serverError = null;
     this.serverSuccess = null;
     this.lastResponse = null;
     this.isSubmitting = true;
@@ -306,21 +326,34 @@ export class RegistrationWizardComponent implements OnInit {
         this.isSubmitting = false;
         this.lastResponse = res;
         this.serverSuccess = `Registration completed. UserId=${res.userId}, CompanyId=${res.companyId}.`;
+
+        this.notifications.showSuccess('Registration completed successfully.');
       },
-      error: err => {
+      error: (err: any) => {
         this.isSubmitting = false;
         console.error('Registration failed', err);
 
-        if (err.status === 400 && err.error?.message) {
-          this.serverError = err.error.message;
-        } else if (err.status === 400 && err.error?.errors) {
-          this.serverError = 'Validation error. Please review the inputs.';
+        if (err.status === 400 && err.error?.errors) {
+          const errorDict = err.error.errors as { [key: string]: string[] };
+          const messages = Object.values(errorDict)
+            .flat()
+            .filter(m => !!m);
+
+          const message =
+            messages.length > 0
+              ? messages.join(' ')
+              : 'Validation error. Please review the inputs.';
+
+          this.notifications.showError(message);
+        } else if (err.status === 400 && err.error?.message) {
+          this.notifications.showError(err.error.message);
         } else {
-          this.serverError = 'An unexpected error occurred while registering.';
+          this.notifications.showError('An unexpected error occurred while registering.');
         }
       }
     });
   }
+
 
   buildSummaryCompany(): string {
     const companyName = this.companyControls['companyName'].value;
@@ -339,4 +372,23 @@ export class RegistrationWizardComponent implements OnInit {
     const last = this.userControls['lastName'].value;
     return [first, last].filter(Boolean).join(' ') || '-';
   }
+
+  loadIndustries(): void {
+    this.industries$ = this.industriesService.getIndustries().pipe(
+      catchError(err => {
+        console.error('Failed to load industries', err);
+
+        if (err.status === 400 && err.error?.errors) {
+          this.notifications.showError('Invalid industries request.');
+        } else {
+          // 0 / 500+ уже обработаны интерсептором, но можем дать более конкретный текст
+          this.notifications.showError('Failed to load industries. Please try again later.');
+        }
+
+        return of<IndustryDto[]>([]);
+      })
+    );
+  }
+
+
 }

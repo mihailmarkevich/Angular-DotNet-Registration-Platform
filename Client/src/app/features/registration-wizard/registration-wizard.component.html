@@ -231,11 +231,7 @@
         {{ serverSuccess }}
       </div>
 
-      <div *ngIf="serverError" class="server-message error">
-        {{ serverError }}
-      </div>
-
-      <div *ngIf="!serverError && !serverSuccess">
+      <div *ngIf="!serverSuccess">
         No registration has been submitted yet.
       </div>
     </div>

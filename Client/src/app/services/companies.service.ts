@@ -23,13 +23,6 @@ export class CompaniesService {
       params = params.set('industryId', industryId.toString());
     }
 
-    return this.http
-      .get<CompanySuggestionDto[]>(`${this.baseUrl}/search`, { params })
-      .pipe(
-        catchError(err => {
-          console.error('Company search failed', err);
-          return of([]);
-        })
-      );
+    return this.http.get<CompanySuggestionDto[]>(`${this.baseUrl}/search`, { params });
   }
 }
