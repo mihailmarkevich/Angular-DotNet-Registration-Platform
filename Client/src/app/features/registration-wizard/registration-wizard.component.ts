@@ -78,15 +78,43 @@ export class RegistrationWizardComponent implements OnInit {
 
   private buildForms(): void {
     this.companyForm = this.fb.group({
-      companyName: ['', [Validators.required, Validators.maxLength(255)]],
+      companyName: [
+        '', 
+        [
+          Validators.required, 
+          Validators.maxLength(255),
+          Validators.pattern(/^[^<>]*$/)
+        ]
+      ],
       industryId: [null, [Validators.required]]
     });
 
     this.userForm = this.fb.group(
       {
-        firstName: ['', [Validators.required, Validators.maxLength(100)]],
-        lastName: ['', [Validators.required, Validators.maxLength(100)]],
-        userName: ['', [Validators.required, Validators.maxLength(100)], [this.usernameAvailableValidator()]],
+        firstName: [
+          '', 
+          [
+            Validators.required, 
+            Validators.maxLength(100),
+            Validators.pattern(/^[^<>]*$/)
+          ]
+        ],
+        lastName: [
+          '', 
+          [
+            Validators.required, 
+            Validators.maxLength(100),
+            Validators.pattern(/^[^<>]*$/)
+          ]
+        ],
+        userName: [
+          '', 
+          [
+            Validators.required, 
+            Validators.maxLength(100),
+            Validators.pattern(/^[a-zA-Z0-9._-]+$/)
+          ], 
+          [this.usernameAvailableValidator()]],
         email: ['', [Validators.email, Validators.maxLength(256)]],
         password: ['', [Validators.required, Validators.minLength(8)]],
         passwordRepeat: ['', [Validators.required]]

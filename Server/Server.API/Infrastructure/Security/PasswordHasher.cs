@@ -10,7 +10,8 @@ namespace Server.API.Infrastructure.Security
     {
         private const int _saltSize = 16; // 128 bit
         private const int _keySize = 32;  // 256 bit
-        private const int _iterations = 100_000;
+        // IMPORTANT: iterations aren't stored in the database. Never change this value without applying the changes to a users table.
+        private const int _iterations = 100_000; 
 
         public void HashPassword(string password, out byte[] hash, out byte[] salt)
         {
@@ -23,12 +24,12 @@ namespace Server.API.Infrastructure.Security
             hash = pbkdf2.GetBytes(_keySize);
         }
 
-        public bool VerifyPassword(string password, byte[] hash, byte[] salt, int iterations)
+        public bool VerifyPassword(string password, byte[] hash, byte[] salt)
         {
             if (hash is null) throw new ArgumentNullException(nameof(hash));
             if (salt is null) throw new ArgumentNullException(nameof(salt));
 
-            using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, iterations, HashAlgorithmName.SHA256);
+            using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, _iterations, HashAlgorithmName.SHA256);
             var computed = pbkdf2.GetBytes(_keySize);
 
             return CryptographicOperations.FixedTimeEquals(hash, computed);

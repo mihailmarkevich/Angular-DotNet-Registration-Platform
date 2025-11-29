@@ -19,6 +19,9 @@
           <mat-error *ngIf="companyControls['companyName'].hasError('maxlength')">
             Company name must be at most 255 characters.
           </mat-error>
+          <mat-error *ngIf="companyControls['companyName'].hasError('pattern')">
+            Company name contains invalid characters (&lt; &gt; not allowed).
+          </mat-error>
         </mat-form-field>
 
         <mat-autocomplete #autoCompany="matAutocomplete" (optionSelected)="onCompanyOptionSelected($event.option.value)">
@@ -69,6 +72,9 @@
             <mat-error *ngIf="userControls['firstName'].hasError('maxlength')">
               First name must be at most 100 characters.
             </mat-error>
+            <mat-error *ngIf="userControls['firstName'].hasError('pattern')">
+              First name contains invalid characters.
+            </mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
@@ -79,6 +85,9 @@
             </mat-error>
             <mat-error *ngIf="userControls['lastName'].hasError('maxlength')">
               Last name must be at most 100 characters.
+            </mat-error>
+            <mat-error *ngIf="userControls['lastName'].hasError('pattern')">
+              Last name contains invalid characters.
             </mat-error>
           </mat-form-field>
         </div>
@@ -97,6 +106,9 @@
           </mat-error>
           <mat-error *ngIf="userControls['userName'].hasError('usernameTaken')">
             This username is already taken.
+          </mat-error>
+          <mat-error *ngIf="userControls['userName'].hasError('pattern')">
+            Username can contain only letters, numbers, dot, underscore, or hyphen.
           </mat-error>
           <mat-hint *ngIf="usernameCheckInProgress">
             Checking username availability…

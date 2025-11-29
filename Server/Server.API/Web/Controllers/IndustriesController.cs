@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Server.API.Application.Abstractions.Persistance;
 using Server.API.Web.DTOs;
+using Server.API.Web.Mappings;
 
 namespace Server.API.Web.Controllers
 {
@@ -28,7 +29,7 @@ namespace Server.API.Web.Controllers
 
             var result = industries.ToDtoList();
 
-            return Ok(industries);
+            return Ok(result);
         }
     }
 }

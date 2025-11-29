@@ -1,23 +1,27 @@
 ﻿using Server.API.Domain.Entities;
 using Server.API.Web.DTOs;
 
-public static class IndustryMappings
+namespace Server.API.Web.Mappings
 {
-    public static IndustryDto ToDto(this Industry entity)
+    public static class IndustryMappings
     {
-        if (entity is null) throw new ArgumentNullException(nameof(entity));
-
-        return new IndustryDto
+        public static IndustryDto ToDto(this Industry entity)
         {
-            Id = entity.Id,
-            Name = entity.Name
-        };
+            if (entity is null) throw new ArgumentNullException(nameof(entity));
+
+            return new IndustryDto
+            {
+                Id = entity.Id,
+                Name = entity.Name
+            };
+        }
+
+        public static IEnumerable<IndustryDto> ToDtoList(this IEnumerable<Industry> entities)
+        {
+            if (entities is null) throw new ArgumentNullException(nameof(entities));
+
+            return entities.Select(e => e.ToDto());
+        }
     }
 
-    public static IEnumerable<IndustryDto> ToDtoList(this IEnumerable<Industry> entities)
-    {
-        if (entities is null) throw new ArgumentNullException(nameof(entities));
-
-        return entities.Select(e => e.ToDto());
-    }
 }
