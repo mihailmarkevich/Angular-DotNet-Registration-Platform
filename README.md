@@ -162,6 +162,7 @@ This creates:
 ```bash
 dotnet restore
 dotnet build
+dotnet tool restore
 ```
 
 ---
