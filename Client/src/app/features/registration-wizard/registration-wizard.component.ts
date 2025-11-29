@@ -320,7 +320,7 @@ export class RegistrationWizardComponent implements OnInit {
       next: (res: RegistrationResponseDto) => {
         this.isSubmitting = false;
         this.lastResponse = res;
-        this.serverSuccess = `Registration completed. UserId=${res.userId}, CompanyId=${res.companyId}.`;
+        this.serverSuccess = `Registration completed.`;
 
         this.notifications.showSuccess('Registration completed successfully.');
       },
