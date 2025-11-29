@@ -140,20 +140,31 @@ export class RegistrationWizardComponent implements OnInit {
 
     this.companySuggestions$ = companyNameControl.valueChanges.pipe(
       map(value => {
-      if (industryIdControl.disabled) {
-        industryIdControl.enable({ emitEvent: false });
-        industryIdControl.reset(null, { emitEvent: false });
-      }
-      return value;
-    }),
+        // if user starts typing again after selecting a company,
+        // re-enable and reset the industry
+        if (industryIdControl.disabled) {
+          industryIdControl.enable({ emitEvent: false });
+          industryIdControl.reset(null, { emitEvent: false });
+        }
+
+        return typeof value === 'string' ? value.trim() : '';
+      }),
       debounceTime(300),
       distinctUntilChanged(),
-      filter(value => typeof value === 'string' && value.trim().length >= 2),
-      switchMap(value =>
-        this.companiesService.searchCompanies(value as string, industryIdControl.value as number | null)
-      )
+      switchMap(value => {
+        // if input is too short, don't call backend and CLEAR suggestions
+        if (!value || value.length < 2) {
+          return of([]); // <- important: emit empty list
+        }
+
+        return this.companiesService.searchCompanies(
+          value,
+          industryIdControl.value as number | null
+        );
+      })
     );
   }
+
 
   private usernameAvailableValidator(): AsyncValidatorFn {
     return (control: AbstractControl): Observable<ValidationErrors | null> => {
@@ -180,16 +191,46 @@ export class RegistrationWizardComponent implements OnInit {
 
   private passwordsMatchValidator(): ValidatorFn {
     return (group: AbstractControl): ValidationErrors | null => {
-      const password = group.get('password')?.value;
-      const repeat = group.get('passwordRepeat')?.value;
+      const passwordControl = group.get('password');
+      const repeatControl = group.get('passwordRepeat');
 
-      if (!password || !repeat) {
+      if (!passwordControl || !repeatControl) {
         return null;
       }
 
-      return password === repeat ? null : { passwordsMismatch: true };
+      const password = passwordControl.value;
+      const repeat = repeatControl.value;
+
+      // If one of them is empty – don't show mismatch error yet
+      if (!password || !repeat) {
+        // clean up possible old mismatch error
+        if (repeatControl.hasError('passwordsMismatch')) {
+          const errors = { ...(repeatControl.errors ?? {}) };
+          delete errors['passwordsMismatch'];
+          repeatControl.setErrors(Object.keys(errors).length ? errors : null);
+        }
+        return null;
+      }
+
+      if (password === repeat) {
+        // clear mismatch error when they match again
+        if (repeatControl.hasError('passwordsMismatch')) {
+          const errors = { ...(repeatControl.errors ?? {}) };
+          delete errors['passwordsMismatch'];
+          repeatControl.setErrors(Object.keys(errors).length ? errors : null);
+        }
+        return null;
+      }
+
+      // Add mismatch error to passwordRepeat control
+      const existingErrors = repeatControl.errors ?? {};
+      repeatControl.setErrors({ ...existingErrors, passwordsMismatch: true });
+
+      // Optionally you can also mark the group as having the error
+      return { passwordsMismatch: true };
     };
   }
+
 
   get companyControls(): { [key: string]: AbstractControl } {
     return this.companyForm.controls;

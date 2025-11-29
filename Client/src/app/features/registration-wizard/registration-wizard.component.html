@@ -145,7 +145,7 @@
             <mat-error *ngIf="userControls['passwordRepeat'].hasError('required')">
               Please repeat the password.
             </mat-error>
-            <mat-error *ngIf="userForm.errors?.['passwordsMismatch']">
+            <mat-error *ngIf="userControls['passwordRepeat'].hasError('passwordsMismatch')">
               Passwords do not match.
             </mat-error>
           </mat-form-field>
@@ -228,12 +228,10 @@
       <h2>Step 4: Result</h2>
 
       <div *ngIf="serverSuccess" class="server-message success">
-        <mat-icon color="primary">check_circle</mat-icon>
         {{ serverSuccess }}
       </div>
 
       <div *ngIf="serverError" class="server-message error">
-        <mat-icon color="warn">error</mat-icon>
         {{ serverError }}
       </div>
 
