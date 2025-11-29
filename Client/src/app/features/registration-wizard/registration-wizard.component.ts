@@ -221,9 +221,7 @@ export class RegistrationWizardComponent implements OnInit {
       const password = passwordControl.value;
       const repeat = repeatControl.value;
 
-      // If one of them is empty – don't show mismatch error yet
       if (!password || !repeat) {
-        // clean up possible old mismatch error
         if (repeatControl.hasError('passwordsMismatch')) {
           const errors = { ...(repeatControl.errors ?? {}) };
           delete errors['passwordsMismatch'];
@@ -233,7 +231,6 @@ export class RegistrationWizardComponent implements OnInit {
       }
 
       if (password === repeat) {
-        // clear mismatch error when they match again
         if (repeatControl.hasError('passwordsMismatch')) {
           const errors = { ...(repeatControl.errors ?? {}) };
           delete errors['passwordsMismatch'];
@@ -242,11 +239,9 @@ export class RegistrationWizardComponent implements OnInit {
         return null;
       }
 
-      // Add mismatch error to passwordRepeat control
       const existingErrors = repeatControl.errors ?? {};
       repeatControl.setErrors({ ...existingErrors, passwordsMismatch: true });
 
-      // Optionally you can also mark the group as having the error
       return { passwordsMismatch: true };
     };
   }
@@ -381,7 +376,6 @@ export class RegistrationWizardComponent implements OnInit {
         if (err.status === 400 && err.error?.errors) {
           this.notifications.showError('Invalid industries request.');
         } else {
-          // 0 / 500+ уже обработаны интерсептором, но можем дать более конкретный текст
           this.notifications.showError('Failed to load industries. Please try again later.');
         }
 
