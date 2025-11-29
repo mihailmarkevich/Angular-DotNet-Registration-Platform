@@ -56,15 +56,13 @@ API surface:
 - **Angular**
 - **Angular Material**
 - **Reactive Forms** with sync & async validation
-- HTTP client services
 
 ---
 
 ## 3. Security Considerations
 
 ### ✔ CSRF Protection
-The application **does not use cookies** for authentication or sessions.  
-All API calls are performed via JSON requests without implicit credentials.
+The application **does not use cookies**, therefore CSRF attacks are not possible.
 
 - When authentication is introduced, the recommended approach is:
   - Use Bearer tokens in the `Authorization` header (no cookies) → CSRF avoided by design.
@@ -75,14 +73,13 @@ All API calls are performed via JSON requests without implicit credentials.
 ### ✔ XSS Prevention
 
 **Frontend (Angular)**  
-- Angular’s interpolation (`{{ }}`) automatically escapes HTML.  
-- No innerHTML rendering of user input.  
-- Forms use built-in validation.
+- Angular’s interpolation escapes HTML.  
+- No innerHTML used.
 
 **Backend**
-- DTO validation forbids HTML-like characters where inappropriate (`<`, `>`).
+- Request validation rejects dangerous input.
 - API responses are returned as JSON, never HTML.
-- CSP header is enabled:
+- CSP header enabled:
 
 ```
 Content-Security-Policy:
@@ -93,23 +90,15 @@ Content-Security-Policy:
   frame-ancestors 'none';
 ```
 
-This blocks:
-- Inline scripts
-- External untrusted scripts
-- Frame embedding
-- Most XSS vectors
-
-Combined with Angular’s encoding, the system is protected from stored & reflected XSS attacks.
-
 ---
 
 ### ✔ Password Security (PBKDF2)
 
-- Passwords are hashed using **PBKDF2** with:
-  - Random 128-bit salt
-  - 100,000 iterations
-  - 256-bit derived key
-- Comparison uses constant-time verification.
+Passwords are hashed with:
+- PBKDF2
+- 100,000 iterations
+- 128-bit random salt
+- Constant‑time comparison
 
 ---
 
@@ -117,13 +106,10 @@ Combined with Angular’s encoding, the system is protected from stored & reflec
 
 Two SQL accounts:
 
-1. **Migration user**
-   - Has DDL rights for applying EF migrations.
+1. **app_registration_migrator** — migration user (DDL)
+2. **app_registration_login** — runtime user (DML only)
 
-2. **Application user**
-   - Has minimal read/write permissions on runtime tables.
-
-This minimizes the damage surface in case credentials are compromised.
+⚠️ **IMPORTANT: You must change the default passwords for both SQL users immediately after installation.**
 
 ---
 
@@ -131,10 +117,10 @@ This minimizes the damage surface in case credentials are compromised.
 
 ### 4.1 Prerequisites
 
-- **.NET 8 SDK**
-- **Node.js** (LTS)
-- **Angular CLI** (recommended)
-- **Microsoft SQL Server**
+- .NET 8 SDK  
+- Node.js (LTS)  
+- Angular CLI (recommended)  
+- Microsoft SQL Server  
 - `dotnet` CLI available in PATH
 
 ---
@@ -143,35 +129,29 @@ This minimizes the damage surface in case credentials are compromised.
 
 #### Step 1 — Create the database
 
-Run the script:
+Run:
 
 ```
 db/create-database.sql
 ```
 
-It creates:
-- Database
-- Migration user
-- Application user
-- Permissions
+This creates:
+- The `RegistrationDb` database  
+- SQL user: **app_registration_migrator**  
+- SQL user: **app_registration_login**  
+- Required permissions  
+
+⚠️ **IMPORTANT: Change passwords for both users before production use.**
 
 ---
 
 #### Step 2 — Configure connection strings
 
-`Server.API/appsettings.Development.json`:
+`Server.API/appsettings.json`:
 
 ```json
 "ConnectionStrings": {
-  "DefaultConnection": "Server=YOUR_SERVER;Database=RegistrationDb;User Id=app_user;Password=***;TrustServerCertificate=True;"
-}
-```
-
-`app_registration_migrator/appsettings.json`:
-
-```json
-"ConnectionStrings": {
-  "DefaultConnection": "Server=YOUR_SERVER;Database=RegistrationDb;User Id=migration_user;Password=***;TrustServerCertificate=True;"
+  "DefaultConnection": "Server=YOUR_SERVER;Database=RegistrationDb;User Id=app_registration_login;Password=Change_This_Password_Immediately!;TrustServerCertificate=True;"
 }
 ```
 
@@ -186,31 +166,26 @@ dotnet build
 
 ---
 
-#### Step 4 — Run EF migrations
+#### Step 4 — Run EF migrations with app_registration_migrator login
 
 ```bash
-cd src/app_registration_migrator
-dotnet run
+dotnet ef database update --context AppDbContext --connection "Server=YOUR_SERVER;Database=RegistrationDb;User Id=app_registration_migrator;Password=Change_This_Password_Immediately!;TrustServerCertificate=True;"
 ```
+
+This applies all migrations using the migration user.
 
 ---
 
 #### Step 5 — Run the API
 
 ```bash
-cd src/Server.API
+cd Server.API
 dotnet run
 ```
 
 Swagger UI:  
 ```
 https://localhost:<port>/swagger
-```
-
-Ensure CORS includes Angular:
-
-```json
-"AllowedOrigins": [ "http://localhost:4200" ]
 ```
 
 ---
@@ -235,46 +210,37 @@ export const environment = {
 };
 ```
 
-
-
 #### Step 3 — Run Angular dev server
 
 ```bash
 npm start
 ```
 
-Visit:
+Open:
 
 ```
 http://localhost:4200
 ```
 
+---
+
 ## 4.4 HTTPS / TLS Notes
 
-For simplicity of installation, review, and local testing, this repository **does not include HTTPS certificates or TLS configuration** out of the box.
+This repository does **not** bundle TLS certificates (for simplicity and easier evaluation).
 
-The application runs using:
+Production deployment **must**:
 
-- **HTTP** for the Angular development server (`http://localhost:4200`)
-- **HTTP or the automatically generated ASP.NET Developer Certificate** for the backend
+- Use HTTPS everywhere
+- Redirect HTTP → HTTPS
+- Enable HSTS
+- Use a real TLS certificate (Let’s Encrypt recommended)
 
-This lightweight setup is intentional to minimize onboarding time.
-
-### ⚠️ Production Requirements
-
-For any real deployment:
-
-- **Enable HTTPS** for the API.
-- Use a valid TLS certificate (e.g., Let’s Encrypt or reverse proxy termination).
-- Redirect all HTTP traffic to HTTPS.
-- Enable HSTS (`Strict-Transport-Security` header).
-- Ensure Angular is configured to call HTTPS endpoints.
-
-ASP.NET Core minimal production middleware:
+ASP.NET minimal production config:
 
 ```csharp
 app.UseHttpsRedirection();
 app.UseHsts();
 ```
 
-TLS is **mandatory** to ensure user passwords and sensitive data are transmitted securely.
+TLS is mandatory for secure password transmission.
+
